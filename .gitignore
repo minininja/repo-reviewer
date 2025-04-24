@@ -1,9 +1,17 @@
+### when running against a remote repo it'll be downloaded into a dynamic folder.
+### bugs could result in those sticking around so make sure we ignore them
+repo-*
+
+### default report output file
+report.md
+
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
 ### IntelliJ IDEA ###
+.idea
 .idea/modules.xml
 .idea/jarRepositories.xml
 .idea/compiler.xml
