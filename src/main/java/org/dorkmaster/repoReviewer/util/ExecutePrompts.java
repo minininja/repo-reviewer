@@ -12,7 +12,6 @@ import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.DockerClientFactory;
@@ -21,11 +20,7 @@ import org.testcontainers.ollama.OllamaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import java.io.*;
-import java.util.Collection;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class ExecutePrompts {
     private static final String OLLAMA_IMAGE = "ollama/ollama:latest";
@@ -34,6 +29,7 @@ public class ExecutePrompts {
 
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
     protected String model = DOCKER_IMAGE_NAME;
+    protected Set<String> ignoredDirectories = Set.of(".git");
 
     public static interface Assistant {
         String chat(String userMessage);
@@ -82,8 +78,10 @@ public class ExecutePrompts {
 
         // load the repo into the context
         logger.info("Loading repo files from {}", folder);
-        // Filter out empty files - They seem fine when run via the ide but not when via CLI
-        List<Document> documents =  FileSystemDocumentLoader.loadDocuments(folder).stream().filter(a -> a.toTextSegment().text().trim().length() > 0).collect(Collectors.toList());
+
+        List<Document> documents = new LinkedList<>();
+        walk(documents, new File(folder));
+
         InMemoryEmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
         EmbeddingStoreIngestor.ingest(documents, embeddingStore);
         Assistant chatAssistant = AiServices.builder(Assistant.class)
@@ -108,6 +106,29 @@ public class ExecutePrompts {
         } catch (FileNotFoundException e) {
             logger.error("Error writing output file", e);
             System.exit(1);
+        }
+    }
+
+    public void walk(Collection<Document> documents, File item) {
+        logger.info("Looking at {}", item);
+        if (item.isFile()) {
+            try {
+                // ignore any zero length files (post parsing)
+                Document doc = FileSystemDocumentLoader.loadDocument(item.getAbsolutePath());
+                if (doc.toTextSegment().text().trim().length() > 0) {
+                    documents.add(doc);
+                }
+            } catch(Throwable t) {
+                // skip over this file as it's probably not text
+                logger.info("Error loading {}", item, t);
+            }
+        } else if (item.isDirectory()) {
+            // not every folder needs to be looked at, for example .git
+            if (!ignoredDirectories.contains(item.getName())) {
+                for (File file : item.listFiles()) {
+                    walk(documents, file);
+                }
+            }
         }
     }
 }

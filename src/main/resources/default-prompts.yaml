@@ -1,15 +1,15 @@
 prompts:
   - What is the purpose of this git repo?  What does it do?  What is language is the application source written in?
   - How is the repo built?  How can any tests be executed?
-  - Evaluate the application source and suggest improvements related to the Single Responsibility Principle
-  - Evaluate the application source code and suggest improvements related to the Open-Closed Principle
-  - Evaluate the application source code and suggest improvements related to the Liskov Substitution Principle
-  - Evaluate the application source code and suggest improvements related to the Interface Segregation Principle
-  - Evaluate the application source code and suggest improvements related to the Dependency Inversion Principle
-  - Evaluate the application source and suggest ways to make the code more secure
-  - Evaluate the application source and find sql injection attach vectors
-  - Does the application source code follow the standard naming conventions?  Are there any named items that should have better names?
-  - Evaluate the application source find performance bottlenecks, document the big-o of them and suggest how they can be improve?
-  - Are they any improvements that can be made related to readability of the code?
-  - Are they any improvements that can be made related to documentation of the code?
-  - How can the build scripts be improved?  If there are no build scripts provide an example of one to use.
+  - How can error handling be improved?  Are there edge cases that should be addressed?
+  - What performance optimizations should be made and what are the time and space complexity of the problem areas?  What is the overall performance and complexity of the application?
+  - Are there sufficient unit tests?  What tests should be added?
+  - Are there any best practices which are not currently followed?
+  - Considering only application source code does the project follow the SOLID principals?  Are there any improvements that can be made?
+  - Are there any especially complex parts of the code?  What is the purpose of them and explain how they work.
+  - Are there any readability and maintainability concerns?  How can they be improved?
+  - Are there any security concerns?  Is there any SQL injection?  Are there cross-site scripting vulnerabilities present?  Are there any secrets exposed which should be hidden?  Are any application tokens present which should not be?
+  - What duplicate code is present in the repo?  Should it be removed or is it reasonable?
+  - What design patterns and principals are present within the repo?  Are there any that should be applied?
+  - What are some techniques for refactoring code to improve testability and enable easier unit testing for this repository?
+  - Are there any large functions that should be broken down?  What are the suggested refactorings?
