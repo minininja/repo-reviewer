@@ -1,5 +1,6 @@
 prompts:
   - What is the purpose of this git repo?  What does it do?  What is language is the application source written in?
+  - How is the repo built?  How can any tests be executed?
   - Evaluate the application source and suggest improvements related to the Single Responsibility Principle
   - Evaluate the application source code and suggest improvements related to the Open-Closed Principle
   - Evaluate the application source code and suggest improvements related to the Liskov Substitution Principle
