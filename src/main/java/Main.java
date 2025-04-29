@@ -1,6 +1,10 @@
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import org.apache.commons.cli.*;
+import org.apache.commons.io.FileDeleteStrategy;
 import org.apache.commons.lang3.tuple.Pair;
+import org.dorkmaster.repoReviewer.exception.FatalException;
+import org.dorkmaster.repoReviewer.providers.ModelProvider;
+import org.dorkmaster.repoReviewer.providers.OllamaProvider;
 import org.dorkmaster.repoReviewer.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +13,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
 
 public class Main {
     private static final String GIT_OPTION = "gitUrl";
@@ -107,11 +110,19 @@ public class Main {
             }
         }
 
-        public Pair<String, String> folder() {
+        public FolderHelper folder() {
             if (cli.hasOption(GIT_OPTION)) {
-                return Pair.of(cli.getOptionValue(GIT_OPTION), GitDownloader.cloneRepo(cli.getOptionValue(GIT_OPTION)));
+                return new FolderHelper(
+                        cli.getOptionValue(GIT_OPTION),
+                        GitDownloader.cloneRepo(cli.getOptionValue(GIT_OPTION)),
+                        true
+                );
             } else if (cli.hasOption(LOCATION_OPTION)) {
-                return Pair.of("local repo: " + cli.getOptionValue(LOCATION_OPTION), cli.getOptionValue(LOCATION_OPTION));
+                return new FolderHelper(
+                        cli.getOptionValue(LOCATION_OPTION),
+                        cli.getOptionValue(LOCATION_OPTION),
+                        false
+                );
             } else {
                 formatter.printHelp("java -jar repo-reviewer.jar", options);
                 // throw an error, there's no repo
@@ -162,20 +173,62 @@ public class Main {
             }
             return provider;
         }
+
+        static class FolderHelper {
+            String displayName;
+            String localFolder;
+            boolean delete;
+
+            public FolderHelper(String displayName, String localFolder, boolean delete) {
+                this.displayName = displayName;
+                this.localFolder = localFolder;
+                this.delete = delete;
+            }
+
+            public String getDisplayName() {
+                return displayName;
+            }
+
+            public String getLocalFolder() {
+                return localFolder;
+            }
+
+            public boolean isDelete() {
+                return delete;
+            }
+        }
     }
 
     public static void main(String[] args) {
         Cli cli = new Cli(args);
         PromptLoader.Prompts prompts = cli.prompts();
         if (prompts.getPrompts().size() > 0) {
-            Pair<String, String> tmp = cli.folder();
+            final Cli.FolderHelper folder = cli.folder();
+
+            // ensure that we clean up after ourselves
+            if (folder.isDelete()) {
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                    File localFolder = new File(folder.localFolder);
+                    try {
+                        // The normal file.delete or file.deleteOnExit aren't cutting it here
+                        // which could be because of an open reference somewhere or something else
+                        // that'll need be fixed, but until we get there use commons-io to force
+                        // cleanup.
+                        FileDeleteStrategy.FORCE.delete(localFolder);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }));
+            }
+
             try {
                 ChatLanguageModel model = cli.provider().build();
 
                 // execute the prompts
-                new ExecutePrompts().execute(model, tmp.getLeft(), tmp.getRight(), prompts.getPrompts(), cli.outputFile());
-            } finally {
-                new File(tmp.getRight()).delete();
+                new ExecutePrompts().execute(model, folder.getDisplayName(), folder.getLocalFolder(), prompts.getPrompts(), cli.outputFile());
+            } catch(FatalException e) {
+                logger.error("Fatal error occurred, shutting down with exit code {}", e.getExitCode(), e);
+                System.exit(e.getExitCode());
             }
         }
     }

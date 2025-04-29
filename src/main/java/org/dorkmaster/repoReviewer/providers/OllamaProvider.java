@@ -1,4 +1,4 @@
-package org.dorkmaster.repoReviewer.util;
+package org.dorkmaster.repoReviewer.providers;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Image;

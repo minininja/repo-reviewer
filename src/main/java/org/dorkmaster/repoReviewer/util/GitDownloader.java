@@ -4,6 +4,7 @@ import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.Executor;
+import org.dorkmaster.repoReviewer.exception.RepoException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,11 +46,11 @@ public class GitDownloader {
 
             if (!resultHandler.hasResult()) {
                 logger.error("Git clone timed out from \"{}\"", repoUrl);
-                System.exit(1);
+                throw new RepoException("Git clone timed out", tempFolder, repoUrl);
             }
         } catch (IOException | InterruptedException e) {
-            logger.error("Git clone failed from \"{}\"", repoUrl, e);
-            System.exit(1);
+            logger.error("Git process died unexpectedly while cloning from \"{}\"", repoUrl, e);
+            throw new RepoException("Git process died unexpectedly", tempFolder, repoUrl);
         }
 
         return tempFolder;

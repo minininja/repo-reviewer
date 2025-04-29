@@ -7,16 +7,11 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class PromptLoader {
-    public static Prompts loadPrompts(InputStream in) {
-        Yaml yaml = new Yaml();
-        try {
-            Prompts prompts = yaml.loadAs(in, Prompts.class);
-            return prompts;
-        } catch(Throwable t) {
-            t.printStackTrace();;
-        }
+    protected static Yaml yaml = new Yaml();
 
-        return new Prompts();
+    public static Prompts loadPrompts(InputStream in) {
+        Prompts prompts = yaml.loadAs(in, Prompts.class);
+        return prompts;
     }
 
     public static class Prompts {

@@ -44,12 +44,12 @@ public class ExecutePrompts {
         this.model = model;
     }
 
-    public void execute(ChatLanguageModel model, String repo, String folder, Collection<String> prompts, String output) {
+    public void execute(ChatLanguageModel model, String displayName, String localFolder, Collection<String> prompts, String output) {
         // load the repo into the context
-        logger.info("Loading repo files from {}", folder);
+        logger.info("Loading repo files from {}", localFolder);
 
         List<Document> documents = new LinkedList<>();
-        walk(documents, new File(folder));
+        walk(documents, new File(localFolder));
 
         if (documents.size() == 0) {
             logger.info("Repo does not contain any files which can be processed");
@@ -66,7 +66,7 @@ public class ExecutePrompts {
 
         // setup the report
         try (PrintStream out = new PrintStream(new FileOutputStream(output))) {
-            out.println(String.format("# AI review of %s by %s\n--", repo, this.model));
+            out.println(String.format("# AI review of %s by %s\n--", displayName, this.model));
             out.println(String.format("Generated at: %s\n", new Date().toString()));
             out.flush();
 

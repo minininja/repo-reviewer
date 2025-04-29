@@ -1,4 +1,4 @@
-package org.dorkmaster.repoReviewer.util;
+package org.dorkmaster.repoReviewer.providers;
 
 import dev.langchain4j.model.chat.ChatLanguageModel;
 
