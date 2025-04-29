@@ -2,8 +2,8 @@
 ### bugs could result in those sticking around so make sure we ignore them
 repo-*
 
-### default report output file
-report.md
+### default report output file and similar files
+report*.md
 
 target/
 !.mvn/wrapper/maven-wrapper.jar

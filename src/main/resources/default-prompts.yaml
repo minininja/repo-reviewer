@@ -1,15 +1,14 @@
 prompts:
-  - What is the purpose of this git repo?  What does it do?  What is language is the application source written in?
-  - How is the repo built?  How can any tests be executed?
+  - Summarize the code in the repo and explain it's purpose, what it does and provide a rough overview of how it works.  Which languages is it written in and what are the rough percentages of those languages present?
+  - What build tool is used?  What commands should be run from the terminal to build the repo?  How are tests executed from the CLI?
   - How can error handling be improved?  Are there edge cases that should be addressed?
-  - What performance optimizations should be made and what are the time and space complexity of the problem areas?  What is the overall performance and complexity of the application?
-  - Are there sufficient unit tests?  What tests should be added?
-  - Are there any best practices which are not currently followed?
   - Considering only application source code does the project follow the SOLID principals?  Are there any improvements that can be made?
-  - Are there any especially complex parts of the code?  What is the purpose of them and explain how they work.
+  - What design patterns and principals are present within the repo?  Are there any that should be applied?
+  - What duplicate code is present in the repo?  Should it be removed or is it reasonable?
   - Are there any readability and maintainability concerns?  How can they be improved?
   - Are there any security concerns?  Is there any SQL injection?  Are there cross-site scripting vulnerabilities present?  Are there any secrets exposed which should be hidden?  Are any application tokens present which should not be?
-  - What duplicate code is present in the repo?  Should it be removed or is it reasonable?
-  - What design patterns and principals are present within the repo?  Are there any that should be applied?
-  - What are some techniques for refactoring code to improve testability and enable easier unit testing for this repository?
   - Are there any large functions that should be broken down?  What are the suggested refactorings?
+  - What are the top 5 performance optimizations that can be made and what are the time and space complexity of the problem areas?  What is the overall performance and complexity of the application?
+  - What are the top 5 most complex parts of the source code and how could they be made less complex?
+  - Are there sufficient unit tests?  What tests should be added?
+  - Are there any best practices which are not currently followed?

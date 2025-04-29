@@ -2,6 +2,7 @@ package org.dorkmaster.repoReviewer.util;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Image;
+import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
 import dev.langchain4j.data.segment.TextSegment;
@@ -43,44 +44,17 @@ public class ExecutePrompts {
         this.model = model;
     }
 
-    public void execute(String repo, String folder, Collection<String> prompts, String output) {
-        // get ollama running
-        DockerImageName dockerImageName = DockerImageName.parse(OLLAMA_IMAGE);
-        DockerClient dockerClient = DockerClientFactory.instance().client();
-        dockerClient.listImagesCmd().withReferenceFilter(DOCKER_IMAGE_NAME).exec();
-        List<Image> images = dockerClient.listImagesCmd().withReferenceFilter(DOCKER_IMAGE_NAME).exec();
-        OllamaContainer ollama;
-        if (images.isEmpty()) {
-            ollama = new OllamaContainer(dockerImageName);
-        } else {
-            ollama = new OllamaContainer(DockerImageName.parse(DOCKER_IMAGE_NAME).asCompatibleSubstituteFor(OLLAMA_IMAGE));
-        }
-        ollama.start();
-
-        // start the model
-        try {
-            logger.info("Start pulling the '{}' model ... would take several minutes ...", this.model);
-            Container.ExecResult r = ollama.execInContainer("ollama", "pull", this.model);
-            logger.info("Model pulling competed! {}", r);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException("Error pulling model", e);
-        }
-        ollama.commitToImage(this.model);
-
-        // build the chat model
-        ChatLanguageModel model = OllamaChatModel.builder()
-                .baseUrl(ollama.getEndpoint())
-                .temperature(0.0)
-                .logRequests(true)
-                .logResponses(true)
-                .modelName(this.model)
-                .build();
-
+    public void execute(ChatLanguageModel model, String repo, String folder, Collection<String> prompts, String output) {
         // load the repo into the context
         logger.info("Loading repo files from {}", folder);
 
         List<Document> documents = new LinkedList<>();
         walk(documents, new File(folder));
+
+        if (documents.size() == 0) {
+            logger.info("Repo does not contain any files which can be processed");
+            System.exit(1);
+        }
 
         InMemoryEmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
         EmbeddingStoreIngestor.ingest(documents, embeddingStore);
@@ -89,7 +63,6 @@ public class ExecutePrompts {
                 .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
                 .contentRetriever(EmbeddingStoreContentRetriever.from(embeddingStore))
                 .build();
-
 
         // setup the report
         try (PrintStream out = new PrintStream(new FileOutputStream(output))) {
@@ -100,8 +73,15 @@ public class ExecutePrompts {
             for (String prompt : prompts) {
                 logger.info("Executing prompt \"{}\"", prompt);
                 out.println(String.format("## PROMPT: %s\n", prompt));
-                out.println(chatAssistant.chat(prompt));
-                out.flush();
+                for (int i = 0; i < 3; i++) {
+                    try {
+                        out.println(chatAssistant.chat(prompt));
+                        out.flush();
+                        break;
+                    } catch (Throwable t) {
+                        // ignore errors, they'll most likely be timeouts.  just try again.
+                    }
+                }
             }
         } catch (FileNotFoundException e) {
             logger.error("Error writing output file", e);
@@ -110,7 +90,6 @@ public class ExecutePrompts {
     }
 
     public void walk(Collection<Document> documents, File item) {
-        logger.info("Looking at {}", item);
         if (item.isFile()) {
             try {
                 // ignore any zero length files (post parsing)
@@ -123,6 +102,7 @@ public class ExecutePrompts {
                 logger.info("Error loading {}", item, t);
             }
         } else if (item.isDirectory()) {
+            logger.info("Looking for files in {}", item);
             // not every folder needs to be looked at, for example .git
             if (!ignoredDirectories.contains(item.getName())) {
                 for (File file : item.listFiles()) {
